@@ -1,15 +1,16 @@
-import { useQuizStore } from '../stores/quiz/quizStore'
 import { Alert } from '../components/Alert'
-import { NO_ANSWER_POINTS, REVEAL_TIME } from '../stores/quiz/config'
-import { revealAnswers } from '../stores/quiz/actions/revealAnswers'
-import { pickRandom } from '../stores/quiz/actions/pickRandom'
-import { addPoints } from '../stores/quiz/actions/addPoints'
+import { REVEAL_TIME } from '../config'
 import { useEffect } from 'react'
+import { useSnapshot } from 'valtio'
+import { quizStore } from '../stores/quizStore'
+import { appStore } from '../stores/appStore'
+import { fetchScore } from '../stores/actions/fetchScore'
 
 let interval: number | null = null
 let timeLeft = 0
+let lastChoice = 0
 
-const setTimer = (time: number | string) => {
+const showAnswerTimer = (time: number | string) => {
   const timerEl = document.getElementById('timer')
   if (!timerEl) return
   if (time) {
@@ -20,51 +21,64 @@ const setTimer = (time: number | string) => {
 }
 
 export function Quiz() {
-  const question = useQuizStore((state) => state.question)
-  const reveal = useQuizStore((state) => state.reveal)
+  const quizState = useSnapshot(quizStore)
 
-  const onReveal = (points: number) => {
-    if (interval) clearTimeout(interval)
-    setTimer('')
-    revealAnswers(true)
-    setTimeout(() => onAnswer(points), REVEAL_TIME)
+  const onReveal = (cid: number | null) => {
+    if (cid !== null) {
+      lastChoice = cid
+      if (interval) clearTimeout(interval)
+      showAnswerTimer('')
+      quizStore.reveal = true
+      setTimeout(() => onChoice(cid), REVEAL_TIME)
+    } else {
+      onChoice(cid)
+    }
   }
 
-  const startTimer = () => {
-    if (!question) return
+  const startAnswerTimer = () => {
+    if (!quizState.question) return
 
     if (interval) {
       clearTimeout(interval)
     }
 
-    timeLeft = question.time
-    setTimer(timeLeft)
+    timeLeft = quizState.question.time
+    showAnswerTimer(timeLeft)
 
-    interval = setInterval(() => {
+    interval = window.setInterval(() => {
       timeLeft = timeLeft - 1
       if (timeLeft < 1) {
-        onReveal(NO_ANSWER_POINTS)
+        onReveal(null)
         return
       }
-      setTimer(timeLeft)
+      showAnswerTimer(timeLeft)
     }, 1000)
   }
 
-  const onAnswer = (points: number) => {
-    addPoints(points)
-    revealAnswers(false)
-    startTimer()
-    pickRandom()
+  const onChoice = (cid: number | null) => {
+    if (cid !== null) {
+      quizStore.choices.push(cid)
+    }
+
+    if (quizState.questions!.length < 1) {
+      fetchScore()
+      appStore.page = 'gameover'
+    } else {
+      startAnswerTimer()
+      quizStore.question = quizStore.questions!.shift()
+    }
+
+    quizStore.reveal = false
   }
 
-  if (!question) {
+  if (!quizState.question) {
     return (
       <Alert message="Error: no questions available" />
     )
   }
 
   useEffect(() => {
-    startTimer()
+    startAnswerTimer()
     return () => {
       if (interval) {
         clearInterval(interval)
@@ -74,24 +88,15 @@ export function Quiz() {
 
   return (
     <div>
-      <h3>{question.question}</h3>
-      {question.choices.map((c) => (
+      <h3>{quizState.question.question}</h3>
+      {quizState.question.choices.map((c) => (
         <p key={c.choice}>
-          <button onClick={() => onReveal(c.points)} disabled={reveal}>
+          <button onClick={() => onReveal(c.id)} disabled={quizState.reveal} style={{ opacity: 1, filter: quizState.reveal && c.id !== lastChoice ? 'brightness(0.5)' : '' }}>
             {c.choice}
-            {reveal &&
-              <>
-                &nbsp;
-                &hellip;
-                &nbsp;
-                <strong>{c.points}</strong>
-              </>
-            }
           </button>
-          &nbsp;
         </p>
       ))}
-      <div id="timer">⌛ {question.time}</div>
+      <div id="timer">⌛ {quizState.question.time}</div>
     </div>
   )
 }

@@ -1,13 +1,4 @@
-import { initQuestions } from '../stores/quiz/actions/initQuestions'
-
-let boot = true
-
 export function Loading() {
-  if (boot) {
-    initQuestions()
-    boot = false
-  }
-
   return (
     <>
       <header>

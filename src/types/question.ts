@@ -1,8 +1,9 @@
 export type Question = {
+  id: number
   question: string
-  choices: {
-    choice: string | number
-    points: number
-  }[]
   time: number
+  choices: {
+    id: number
+    choice: string | number
+  }[]
 }

@@ -25,6 +25,8 @@ jobs:
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
+      VITE_SUPABASE_PROJECT: https://ynhubisxcjelfffzbpbm.supabase.co
+      VITE_SUPABASE_API_KEY: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InluaHViaXN4Y2plbGZmZnpicGJtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDAzMDI4MTAsImV4cCI6MjA1NTg3ODgxMH0.Kpov_NZmGiS1qMB6zJ3GZeHrSM5XwsPVEipJRJ7beuo
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

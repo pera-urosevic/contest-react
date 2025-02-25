@@ -1,12 +1,13 @@
-import { endQuiz } from '../stores/app/actions/endQuiz'
-import { useQuizStore } from '../stores/quiz/quizStore'
+import { useSnapshot } from 'valtio'
+import { quizStore } from '../stores/quizStore'
+import { appStore } from '../stores/appStore'
 
 export function GameOver() {
-  const score = useQuizStore((state) => state.score)
+  const quizState = useSnapshot(quizStore)
 
   const onContinue = (e: React.MouseEvent) => {
     e.preventDefault()
-    endQuiz()
+    appStore.page = 'welcome'
   }
 
   return (
@@ -14,10 +15,17 @@ export function GameOver() {
       <header>
         <h1>Game Over</h1>
       </header>
-      <main>
-        <h1 className="Score">Score: {score}</h1>
-        <a href="#continue" onClick={onContinue}>Continue</a>
-      </main>
+      {quizState.score === null &&
+        <main>
+          <p>Loading score...</p>
+        </main>
+      }
+      {quizState.score !== null &&
+        <main>
+          <h1 className="Score">Score: {quizState.score}</h1>
+          <a href="#continue" onClick={onContinue}>Continue</a>
+        </main>
+      }
     </>
   )
 };
