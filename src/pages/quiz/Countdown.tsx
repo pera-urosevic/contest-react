@@ -16,12 +16,10 @@ export const Countdown = (props: CountdownProps) => {
 
   const start = () => {
     clear()
-
     remaining.current = props.time
 
     interval.current = window.setInterval(() => {
       remaining.current--
-
       if (el.current) el.current.innerText = String(remaining.current)
 
       if (remaining.current < 1) {
