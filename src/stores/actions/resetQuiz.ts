@@ -7,6 +7,5 @@ export const resetQuiz = () => {
   quizStore.question = initial.question
   quizStore.choices = initial.choices
   quizStore.reveal = initial.reveal
-  quizStore.time = initial.time
   quizStore.score = initial.score
 }
