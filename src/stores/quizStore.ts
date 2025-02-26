@@ -7,7 +7,6 @@ export type QuizState = {
   question?: Question
   choices: number[]
   reveal: boolean
-  time: number
   score: number | null
 }
 
@@ -16,7 +15,6 @@ export const initialState: QuizState = {
   question: undefined,
   choices: [],
   reveal: false,
-  time: 0,
   score: null,
 }
 

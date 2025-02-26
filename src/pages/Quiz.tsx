@@ -1,58 +1,27 @@
 import { Alert } from '../components/Alert'
 import { REVEAL_TIME } from '../config'
-import { useEffect } from 'react'
 import { useSnapshot } from 'valtio'
 import { quizStore } from '../stores/quizStore'
 import { appStore } from '../stores/appStore'
 import { fetchScore } from '../stores/actions/fetchScore'
+import { Countdown } from './quiz/Countdown'
+import { useState } from 'react'
 
-let interval: number | null = null
-let timeLeft = 0
-let lastChoice = 0
-
-const showAnswerTimer = (time: number | string) => {
-  const timerEl = document.getElementById('timer')
-  if (!timerEl) return
-  if (time) {
-    timerEl.innerHTML = `⌛ ${time}`
-  } else {
-    timerEl.innerHTML = ''
-  }
-}
+let lastChoice: number | null = 0
 
 export function Quiz() {
   const quizState = useSnapshot(quizStore)
+  const [showCountdown, setShowCountdown] = useState(true)
 
-  const onReveal = (cid: number | null) => {
-    if (cid !== null) {
-      lastChoice = cid
-      if (interval) clearTimeout(interval)
-      showAnswerTimer('')
-      quizStore.reveal = true
-      setTimeout(() => onChoice(cid), REVEAL_TIME)
-    } else {
-      onChoice(cid)
-    }
+  const onExpire = () => {
+    onReveal(null)
   }
 
-  const startAnswerTimer = () => {
-    if (!quizState.question) return
-
-    if (interval) {
-      clearTimeout(interval)
-    }
-
-    timeLeft = quizState.question.time
-    showAnswerTimer(timeLeft)
-
-    interval = window.setInterval(() => {
-      timeLeft = timeLeft - 1
-      if (timeLeft < 1) {
-        onReveal(null)
-        return
-      }
-      showAnswerTimer(timeLeft)
-    }, 1000)
+  const onReveal = (cid: number | null) => {
+    lastChoice = cid
+    quizStore.reveal = true
+    setShowCountdown(false)
+    setTimeout(() => onChoice(cid), REVEAL_TIME)
   }
 
   const onChoice = (cid: number | null) => {
@@ -64,7 +33,7 @@ export function Quiz() {
       fetchScore()
       appStore.page = 'gameover'
     } else {
-      startAnswerTimer()
+      setShowCountdown(true)
       quizStore.question = quizStore.questions!.shift()
     }
 
@@ -77,15 +46,6 @@ export function Quiz() {
     )
   }
 
-  useEffect(() => {
-    startAnswerTimer()
-    return () => {
-      if (interval) {
-        clearInterval(interval)
-      }
-    }
-  }, [])
-
   return (
     <div>
       <h3>{quizState.question.question}</h3>
@@ -96,7 +56,7 @@ export function Quiz() {
           </button>
         </p>
       ))}
-      <div id="timer">⌛ {quizState.question.time}</div>
+      {showCountdown && <Countdown time={quizState.question.time} onExpire={onExpire} />}
     </div>
   )
 }
